@@ -1,4 +1,11 @@
 .vscode/
+venv.sh
 
 credentials.json
 token.pickle
+
+bin/
+include/
+lib/
+pyvenv.cfg
+.env
