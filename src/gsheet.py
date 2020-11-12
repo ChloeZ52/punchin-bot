@@ -6,10 +6,15 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from pprint import pprint
 
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+VALUE_INPUT_OPTION = "USER_ENTERED"
+TODAY_LOOKUP_RANGE = "Lookup Sheet!A1"
+USER_COLUMN_LOOKUP_RANGE = "Lookup Sheet!A2:A2"
+USER_RANGE = "Work Sheet!1:1"
+
 
 class gsheet:
     def __init__(self):
-        SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
         self.creds = None
         # The file token.pickle stores the user's access and refresh tokens, and is
@@ -41,24 +46,39 @@ class gsheet:
         values = result.get("values", [])
         return values
 
-    def get_user_index(self, sheet_id, user):
-        user_arr = self.get_value(sheet_id, "Work Sheet!A:A")
-        return user_arr.index([user]) + 1
-
     def get_today_index(self, sheet_id):
-        index = self.get_value(sheet_id, "Lookup Sheet!A1")[0][0]
+        index = self.get_value(sheet_id, TODAY_LOOKUP_RANGE)[0][0]
+        return None if index == "#N/A" else index
+
+    def get_user_index(self, sheet_id, user):
+        user_arr = self.get_value(sheet_id, USER_RANGE)
+        try:
+            index = user_arr[0].index(user) + 1
+        except ValueError:
+            print(f"user {user} is not found")
+            return None
+
         lookup_formula = f'=SUBSTITUTE(ADDRESS(1,{index},4),"1","")'
-        response = self.add_value(
+        response = self.insert_value(
             sheet_id,
-            "Lookup Sheet!A2:A2",
+            USER_COLUMN_LOOKUP_RANGE,
             {"values": [[lookup_formula]]},
         )
         updatedData = response.get("updatedData")
         values = updatedData.get("values")
-        return values[0][0] if len(values) != 0 else None
+        return values[0][0]
 
-    def add_value(self, sheet_id, sheet_range, range_body):
-        VALUE_INPUT_OPTION = "USER_ENTERED"
+    def get_update_address(self, sheet_id, user):
+        user_index = self.get_user_index(sheet_id, user)
+        today_index = self.get_today_index(sheet_id)
+        if user_index == None or today_index == None:
+            return None
+        address = self.get_user_index(sheet_id, user) + str(
+            self.get_today_index(sheet_id)
+        )
+        return address
+
+    def insert_value(self, sheet_id, sheet_range, range_body):
         request = self.sheet.values().update(
             spreadsheetId=sheet_id,
             range=sheet_range,
@@ -66,6 +86,17 @@ class gsheet:
             body=range_body,
             includeValuesInResponse="true",
             fields="updatedData",
+        )
+        reseponse = request.execute()
+        return reseponse
+
+    def append_value(self, sheet_id, sheet_range, range_body):
+        request = self.sheet.values().append(
+            spreadsheetId=sheet_id,
+            range=sheet_range,
+            valueInputOption=VALUE_INPUT_OPTION,
+            body=range_body,
+            includeValuesInResponse="true",
         )
         reseponse = request.execute()
         return reseponse
