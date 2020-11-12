@@ -32,30 +32,40 @@ class gsheet:
                 pickle.dump(self.creds, token)
 
         self.service = build("sheets", "v4", credentials=self.creds)
+        self.sheet = self.service.spreadsheets()
 
-    def get(self, sheet_id, sheet_range):
-        sheet = self.service.spreadsheets()
-        result = sheet.values().get(spreadsheetId=sheet_id, range=sheet_range).execute()
+    def get_value(self, sheet_id, sheet_range):
+        result = (
+            self.sheet.values().get(spreadsheetId=sheet_id, range=sheet_range).execute()
+        )
         values = result.get("values", [])
-        if not values:
-            print("No data found.")
-        else:
-            for row in values:
-                for v in row:
-                    print(v)
+        return values
 
-    def add(self, sheet_id, sheet_range, range_body):
-        VALUE_INPUT_OPTION = "RAW"
+    def get_user_index(self, sheet_id, user):
+        user_arr = self.get_value(sheet_id, "Work Sheet!A:A")
+        return user_arr.index([user]) + 1
 
-        # Call the Sheets API
-        sheet = self.service.spreadsheets()
+    def get_today_index(self, sheet_id):
+        index = self.get_value(sheet_id, "Lookup Sheet!A1")[0][0]
+        lookup_formula = f'=SUBSTITUTE(ADDRESS(1,{index},4),"1","")'
+        response = self.add_value(
+            sheet_id,
+            "Lookup Sheet!A2:A2",
+            {"values": [[lookup_formula]]},
+        )
+        updatedData = response.get("updatedData")
+        values = updatedData.get("values")
+        return values[0][0] if len(values) != 0 else None
 
-        # Update values
-        request = sheet.values().update(
+    def add_value(self, sheet_id, sheet_range, range_body):
+        VALUE_INPUT_OPTION = "USER_ENTERED"
+        request = self.sheet.values().update(
             spreadsheetId=sheet_id,
             range=sheet_range,
             valueInputOption=VALUE_INPUT_OPTION,
             body=range_body,
+            includeValuesInResponse="true",
+            fields="updatedData",
         )
         reseponse = request.execute()
-        print(reseponse)
+        return reseponse
