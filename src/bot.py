@@ -44,7 +44,7 @@ async def on_voice_state_update(member, before, after):
     elif after.channel != None:
         guild = after.channel.guild
 
-    if guild != GUILD:
+    if guild.name != GUILD:
         return
 
     user = member.name
@@ -102,7 +102,7 @@ async def on_member_join(member):
 
 
 @bot.command(name="echo", help="Use the bot to echo input")
-async def echo_input(ctx, arg):
+async def echo_input(ctx, *, arg):
     await ctx.send(f"This is from user {ctx.message.author.name}: {arg}")
 
 
