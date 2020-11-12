@@ -38,6 +38,15 @@ async def on_ready():
 
 @bot.event
 async def on_voice_state_update(member, before, after):
+    # Check if action is triggered in the right guild
+    if before.channel != None:
+        guild = before.channel.guild
+    elif after.channel != None:
+        guild = after.channel.guild
+
+    if guild != GUILD:
+        return
+
     user = member.name
 
     now = datetime.now()
@@ -83,6 +92,11 @@ async def on_member_join(member):
     print(f"{user} joined!\n")
     sheet = gsheet()
     user_arr = sheet.get_value(SPREADSHEET_ID, USER_RANGE)
+
+    # Check if user already exists in Google Sheets
+    if user_arr[0].index(user) != 0:
+        return
+
     user_arr[0].append(user)
     sheet.insert_value(SPREADSHEET_ID, USER_RANGE, {"values": user_arr})
 
