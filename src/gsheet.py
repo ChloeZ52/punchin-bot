@@ -20,8 +20,8 @@ class gsheet:
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists("token.pickle"):
-            with open("token.pickle", "rb") as token:
+        if os.path.exists("/Users/chloezeng/Documents/side-projects/punchin-bot/src/token.pickle"):
+            with open("/Users/chloezeng/Documents/side-projects/punchin-bot/src/token.pickle", "rb") as token:
                 self.creds = pickle.load(token)
         # If there are no (valid) credentials available, let the user log in.
         if not self.creds or not self.creds.valid:
@@ -29,11 +29,11 @@ class gsheet:
                 self.creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    "credentials.json", SCOPES
+                    "/Users/chloezeng/Documents/side-projects/punchin-bot/src/credentials.json", SCOPES
                 )
                 self.creds = flow.run_local_server()
             # Save the credentials for the next run
-            with open("token.pickle", "wb") as token:
+            with open("/Users/chloezeng/Documents/side-projects/punchin-bot/src/token.pickle", "wb") as token:
                 pickle.dump(self.creds, token)
 
         self.service = build("sheets", "v4", credentials=self.creds)
