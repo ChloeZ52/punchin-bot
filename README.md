@@ -26,4 +26,14 @@ Example:
 
 Output:
 
-`14:45 ~ 15:53`
+`2020-11-12  |  14:45 ~ 15:53`
+
+### Retrieve study hours
+
+Example:
+
+`$get_my_study_hours`
+
+Output:
+
+`2020-11-12: 1.13`
