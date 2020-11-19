@@ -94,8 +94,11 @@ async def on_member_join(member):
     user_arr = sheet.get_value(SPREADSHEET_ID, USER_RANGE)
 
     # Check if user already exists in Google Sheets
-    if user_arr[0].index(user) != 0:
-        return
+    try:
+        if user_arr[0].index(user) != 0:
+            return
+    except ValueError:
+        print(f"Adding user {user} to Google Sheets...")
 
     user_arr[0].append(user)
     sheet.insert_value(SPREADSHEET_ID, USER_RANGE, {"values": user_arr})
@@ -116,10 +119,56 @@ async def stop_bot(ctx):
 async def send_to_google_sheet(ctx):
     user = ctx.author.name
     sheet = gsheet()
-    update_index = sheet.get_update_address(SPREADSHEET_ID, user)
-    update_range = f"{update_index}:{update_index}"
-    record = sheet.get_value(SPREADSHEET_ID, update_range)
-    await ctx.send(f"{record[0][0]}" if len(record) != 0 else "No record found")
+    dates_arr = sheet.get_value(SPREADSHEET_ID, DATE_RANGE)
+    user_index = sheet.get_user_index(SPREADSHEET_ID, user)
+    user_range = f"{user_index}:{user_index}"
+    user_data_arr = sheet.get_value(SPREADSHEET_ID, user_range)
+    output = ""
+    for i, dates in enumerate(dates_arr):
+        if i != 0:
+            date = dates[0]
+            user_data = "" if len(user_data_arr[i]) == 0 else user_data_arr[i][0]
+            user_data = user_data.replace("\n", "  |  ")
+            output += date + ":  |  "
+            output += user_data + "\n"
+    await ctx.send(output)
+
+
+@bot.command(name="get_my_study_hours", help="Retrieve user's study hours")
+async def send_to_google_sheet(ctx):
+    user = ctx.author.name
+    sheet = gsheet()
+    dates_arr = sheet.get_value(SPREADSHEET_ID, DATE_RANGE)
+    user_index = sheet.get_user_index(SPREADSHEET_ID, user)
+    user_range = f"{user_index}:{user_index}"
+    user_data_arr = sheet.get_value(SPREADSHEET_ID, user_range)
+    output = ""
+    for i, dates in enumerate(dates_arr):
+        if i != 0:
+            date = dates[0]
+            output += date + ":  "
+            if len(user_data_arr[i]) == 0:
+                hours = 0
+            else:
+                hours = 0
+                for time in user_data_arr[i][0].split("\n"):
+                    if len(time) != 0:
+                        start_time = time.split("~")[0]
+                        try:
+                            end_time = time.split("~")[1]
+                            hour_digit = int(end_time.split(":")[0]) - int(
+                                start_time.split(":")[0]
+                            )
+                            minutes_digit = int(end_time.split(":")[1]) - int(
+                                start_time.split(":")[1]
+                            )
+                            hours += hour_digit + minutes_digit / 60
+                        # Might be in the middle of study time
+                        except IndexError:
+                            hours += 0
+            output += str(round(hours, 2)) + "\n"
+    print(output)
+    await ctx.send(output)
 
 
 bot.run(TOKEN)
