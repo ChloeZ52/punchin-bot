@@ -26,7 +26,7 @@ Example:
 
 Output:
 
-`2020-11-12  |  14:45 ~ 15:53`
+`2020-11-12:  |  14:45 ~ 15:53`
 
 ### Retrieve study hours
 
